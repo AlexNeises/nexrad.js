@@ -1,0 +1,29 @@
+{
+  "name": "nexrad.js",
+  "version": "1.0.0",
+  "description": "A JavaScript processor for WSR-88D NEXRAD radar data.",
+  "main": "server.js",
+  "scripts": {
+    "grunt": "./node_modules/.bin/grunt",
+    "start": "npm run grunt && node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AlexNeises/nexrad.js.git"
+  },
+  "author": "Alex Neises",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/AlexNeises/nexrad.js/issues"
+  },
+  "homepage": "https://github.com/AlexNeises/nexrad.js#readme",
+  "dependencies": {
+    "connect-busboy": "0.0.2",
+    "express": "^4.14.0",
+    "fs-extra": "^1.0.0"
+  },
+  "devDependencies": {
+    "grunt": "^1.0.1",
+    "grunt-contrib-coffee": "^1.0.0"
+  }
+}
