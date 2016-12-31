@@ -1,0 +1,5 @@
+- 1.0.1
+	Created temp directory if it didn't exist.
+
+- 1.0.0
+	Initial commit.
