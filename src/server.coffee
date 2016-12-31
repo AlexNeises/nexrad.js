@@ -12,15 +12,17 @@ app = express()
 app.use busboy()
 
 app.post "#{baseurl}/radial", (req, res, next) ->
+	if not fs.existsSync 'tmp_uploads/'
+		fs.mkdirSync 'tmp_uploads/'
 	req.pipe req.busboy
 	req.busboy.on 'file', (fieldname, file, filename) ->
 		console.log "Uploading #{filename}"
 
-		fstream = fs.createWriteStream __dirname + '/uploads/' + filename
+		fstream = fs.createWriteStream __dirname + '/tmp_uploads/' + filename
 		file.pipe fstream
 		fstream.on 'close', () ->
 			console.log "Finished uploading #{filename}"
-			file = 'uploads/' + filename
+			file = 'tmp_uploads/' + filename
 			if file?
 				radar = new nx.NexradDecoder()
 				radar.setFileResource file
@@ -36,7 +38,7 @@ app.post "#{baseurl}/radial", (req, res, next) ->
 				res.json
 					data: false
 			
-			fs.remove "uploads/#{filename}", (err) ->
+			fs.remove "tmp_uploads/#{filename}", (err) ->
 				if err
 					console.error err
 				else
