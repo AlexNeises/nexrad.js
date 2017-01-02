@@ -1,4 +1,4 @@
-# nexrad.js v1.0.3
+# nexrad.js v1.0.4
 
 A JavaScript processor for WSR-88D NEXRAD radar data.
 
