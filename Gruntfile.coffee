@@ -20,8 +20,10 @@ module.exports = (grunt) ->
 						}
 					]
 		clean:
-			docs:
+			docs: [
 				'api.md'
+				'docs/'
+			]
 		coffee:
 			compile:
 				files: [
@@ -37,4 +39,5 @@ module.exports = (grunt) ->
 	grunt.loadNpmTasks 'grunt-contrib-coffee'
 	grunt.loadNpmTasks 'grunt-contrib-clean'
 
-	grunt.registerTask 'default', ['apidoc', 'string-replace', 'clean', 'coffee']
+	grunt.registerTask 'default', ['string-replace', 'clean', 'coffee']
+	grunt.registerTask 'gendocs', ['apidoc']
