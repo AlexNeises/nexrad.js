@@ -1,6 +1,12 @@
-# nexrad.js v1.0.1
+# nexrad.js v1.0.3
 
 A JavaScript processor for WSR-88D NEXRAD radar data.
+
+To install, run `npm install`.
+
+Start the server by renaming `config.default.json` to `config.json` and running `npm start`.
+
+At the moment, only radial data can be processed. Raster data will be implemented in v1.1.
 
 - [Radial](#radial)
 	- [All Data](#all-data)
