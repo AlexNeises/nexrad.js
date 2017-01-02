@@ -24,6 +24,7 @@ class NexradDecoder
 		@msg_header_block = {}
 		@description_block = {}
 		@symbology_block = {}
+		@graphic_block = {}
 
 		@msg_header_block_offset = 30
 		@description_block_offset = 48
@@ -40,38 +41,42 @@ class NexradDecoder
 	readByte: (negativeRange = false) ->
 		pos = POSITION
 		POSITION += 1
-		# @handle.readInt8 pos
-		@convertNumToBase(@handle.toString('hex', pos, pos + 1), 16, 10)
+		try
+			@convertNumToBase(@handle.toString('hex', pos, pos + 1), 16, 10)
+		catch e
+			console.error e
 
 	readHalfWord: (negativeRange = false) ->
 		if negativeRange
 			pos = POSITION
 			POSITION += 2
-			@dec2negdec @handle.readInt16BE pos
-			# @dec2negdec @convertNumToBase(@handle.toString('hex', pos, pos + 2), 16, 10)
+			try
+				@dec2negdec @handle.readInt16BE pos
+			catch e
+				console.error e
 		else
 			pos = POSITION
 			POSITION += 2
-			# @handle.readInt16BE pos
-			@convertNumToBase(@handle.toString('hex', pos, pos + 2), 16, 10)
-
-	readHalfWordT: () ->
-		pos = POSITION
-		POSITION += 2
-		@convertNumToBase(@handle.toString('hex', pos, pos + 2), 16, 10)
-		# @handle.readInt32LE pos
+			try
+				@convertNumToBase(@handle.toString('hex', pos, pos + 2), 16, 10)
+			catch e
+				console.error e
 
 	readWord: (negativeRange = false) ->
 		if negativeRange
 			pos = POSITION
 			POSITION += 4
-			@dec2negdec @handle.readInt32BE pos
-			# @dec2negdec @convertNumToBase(@handle.toString('hex', pos, pos + 4), 16, 10)
+			try
+				@dec2negdec @handle.readInt32BE pos
+			catch e
+				console.error e
 		else
 			pos = POSITION
 			POSITION += 4
-			# @handle.readInt32BE pos
-			@convertNumToBase(@handle.toString('hex', pos, pos + 4), 16, 10)
+			try
+				@convertNumToBase(@handle.toString('hex', pos, pos + 4), 16, 10)
+			catch e
+				console.error e
 
 	str_split: (string, splitLength) ->
 		if splitLength is null
@@ -151,6 +156,51 @@ class NexradDecoder
 		Y = 100 * b + d - 4800 + Math.floor(f / 10)
 		new Date(Y, M, D)
 
+	parsePages: () ->
+		console.log 'Parsing pages...'
+		page = {}
+		page.data = {}
+		page.data.messages = {}
+		page.data.vectors = {}
+		page.number = @readHalfWord()
+		page['length'] = @readHalfWord()
+		totalBytesToRead = page['length']
+		messageID = 0
+		vectorID = 0
+		while totalBytesToRead > 0
+			console.log "#{totalBytesToRead} bytes left to read..."
+			packetCode = @readHalfWord()
+			packetLength = @readHalfWord()
+			if (packetCode * 1) is 8
+				messageID++
+				page.data.messages[messageID] = {}
+				page.data.messages[messageID].text_color = @readHalfWord()
+				page.data.messages[messageID].pos_i = @readHalfWord(true)
+				page.data.messages[messageID].pos_j = @readHalfWord(true)
+				page.data.messages[messageID].message = ''
+
+				packetBytesToRead = packetLength - 6
+
+				j = 0
+				while j < packetBytesToRead
+					page.data.messages[messageID].message += String.fromCharCode @readByte()
+					j++
+				totalBytesToRead -= (packetLength * 1 + 4)
+			else if (packetCode * 1) is 10
+				page.data.vectors.color = @readHalfWord()
+				packetBytesToRead = packetLength - 2
+				while packetBytesToRead > 0
+					vectorID++
+					page.data.vectors[vectorID] = {}
+					page.data.vectors[vectorID].pos_i_begin = @readHalfWord(true)
+					page.data.vectors[vectorID].pos_j_begin = @readHalfWord(true)
+					page.data.vectors[vectorID].pos_i_end = @readHalfWord(true)
+					page.data.vectors[vectorID].pos_j_end = @readHalfWord(true)
+
+					packetBytesToRead -= 8
+				totalBytesToRead -= (packetLength * 1 + 4)
+		return page
+
 	parseMHB: () ->
 		console.log 'Processing headers...'
 		POSITION = @msg_header_block_offset
@@ -219,7 +269,39 @@ class NexradDecoder
 
 		return @description_block
 
-	parseLayers: () ->
+	parseRasterLayers: () ->
+		@symbology_block.layerdivider = @readHalfWord()
+		@symbology_block.layerlength = @readWord()
+		@symbology_block.layerpacketcode = @convertNumToBase(@readHalfWord(), 10, 16)
+		@symbology_block.layerpacketcode2 = @convertNumToBase(@readHalfWord(), 10, 16)
+		@symbology_block.layerpacketcode3 = @convertNumToBase(@readHalfWord(), 10, 16)
+		@symbology_block.i_coord_start = @readHalfWord()
+		@symbology_block.j_coord_start = @readHalfWord()
+		@symbology_block.x_scale_int = @readHalfWord()
+		@symbology_block.x_scale_fraction = @readHalfWord()
+		@symbology_block.y_scale_int = @readHalfWord()
+		@symbology_block.y_scale_fraction = @readHalfWord()
+		@symbology_block.num_of_rows = @readHalfWord()
+		@symbology_block.packing_descriptor = @readHalfWord()
+		@symbology_block.row = {}
+
+		i = 0
+		while i < @symbology_block.num_of_rows
+			rowBytes = @readHalfWord()
+			if rowBytes is 'NaN'
+				rowBytes = 0
+			@symbology_block.row[i] = {}
+			@symbology_block.row[i].data = []
+			@symbology_block.row[i].bytes = rowBytes
+
+			j = 0
+			while j < rowBytes
+				tempColorValues = @parseRLE()
+				@symbology_block.row[i].data = @symbology_block.row[i].data.concat tempColorValues
+				j++
+			i++
+
+	parseRadialLayers: () ->
 		@symbology_block.layerdivider = @readHalfWord()
 		@symbology_block.layerlength = @readWord()
 		@symbology_block.layerpacketcode = @convertNumToBase(@readHalfWord(), 10, 16)
@@ -260,9 +342,15 @@ class NexradDecoder
 				@symbology_block.radial[startAngle].colorValues = allcolors[allAngles[k]]
 				k++
 			i++
-			# console.log allcolors
 
-	parsePSB: () ->
+	validateFile: () ->
+		console.log 'Validating file format...'
+		POSITION = @description_block_offset
+		validation = @readHalfWord(true)
+		POSITION = 0
+		return validation
+
+	parsePSB: (type) ->
 		console.log 'Parsing symbology...'
 		@symbology_block_offset = (@description_block.symbologyoffset * 2) + @msg_header_block_offset
 		POSITION = @symbology_block_offset
@@ -274,9 +362,28 @@ class NexradDecoder
 
 		i = 1
 		while i <= @symbology_block.numoflayers
-			@parseLayers()
+			if type is 'radial'
+				@parseRadialLayers()
+			if type is 'raster'
+				@parseRasterLayers()
 			i++
 		return @symbology_block
+
+	parseGAB: () ->
+		@graphic_block_offset = @description_block.graphicoffset * 2 + @msg_header_block_offset
+		POSITION = @graphic_block_offset
+
+		@graphic_block.divider = @readHalfWord(true)
+		@graphic_block.blockid = @readHalfWord()
+		@graphic_block.block_length = @readWord()
+		@graphic_block.num_of_pages = @readHalfWord()
+
+		i = 1
+		@graphic_block.pages = {}
+		while i <= @graphic_block.num_of_pages
+			@graphic_block.pages[i] = @parsePages()
+			i++
+		return @graphic_block
 
 root = exports ? window
 root.NexradDecoder = NexradDecoder
