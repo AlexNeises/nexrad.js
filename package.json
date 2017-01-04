@@ -1,10 +1,9 @@
 {
   "name": "nexrad.js",
-  "version": "1.0.4",
-  "description": "A JavaScript processor for WSR-88D NEXRAD radar data.\n\nTo install, run `npm install`.\n\nStart the server by renaming `config.default.json` to `config.json` and running `npm start`.\n\nAt the moment, only radial data can be processed. Raster data will be implemented in v1.1.",
+  "version": "1.1.0",
+  "description": "A JavaScript processor for WSR-88D NEXRAD radar data.\n\nTo install, run `npm install`.\n\nStart the server by renaming `config.default.json` to `config.json` and running `npm start`.\n\nv1.0.0 has been deprecated and will be removed in v2.0.0.",
   "apidoc": {
-    "title": "nexrad.js API documentation",
-    "url": "https://github.com/AlexNeises/nexrad.js"
+    "title": "nexrad.js API documentation"
   },
   "main": "server.js",
   "scripts": {
@@ -24,9 +23,13 @@
   },
   "homepage": "https://github.com/AlexNeises/nexrad.js#readme",
   "dependencies": {
+    "async": "^2.1.4",
+    "cluster": "^0.7.7",
     "connect-busboy": "0.0.2",
     "express": "^4.14.0",
-    "fs-extra": "^1.0.0"
+    "fs-extra": "^1.0.0",
+    "lodash": "^4.17.4",
+    "progress": "^1.1.8"
   },
   "devDependencies": {
     "apidoc-markdown": "^0.2.0",

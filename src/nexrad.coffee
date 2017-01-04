@@ -1,4 +1,7 @@
 fs = require 'fs-extra'
+_ = require 'lodash'
+ProgressBar = require 'progress'
+
 POSITION = 0
 
 class NexradDecoder
@@ -32,17 +35,24 @@ class NexradDecoder
 	setFileResource: (file) ->
 		@filename = file
 		@handle = fs.readFileSync file
-	
-	convertNumToBase: (num, baseA, baseB) ->
-		if !(baseA < 2 or baseB < 2 or isNaN(baseA) or isNaN(baseB) or baseA > 36 or baseB > 36)
-			return parseInt(num, baseA).toString(baseB)
-		return
 
+	hex2dec: (num) ->
+		return parseInt(num, 16).toString(10)
+
+	dec2hex: (num) ->
+		return parseInt(num, 10).toString(16)
+
+	bin2dec: (num) ->
+		return parseInt(num, 2).toString(10)
+
+	dec2bin: (num) ->
+		return parseInt(num, 10).toString(2)
+	
 	readByte: (negativeRange = false) ->
 		pos = POSITION
 		POSITION += 1
 		try
-			@convertNumToBase(@handle.toString('hex', pos, pos + 1), 16, 10)
+			@hex2dec(@handle.toString('hex', pos, pos + 1))
 		catch e
 			console.error e
 
@@ -58,7 +68,7 @@ class NexradDecoder
 			pos = POSITION
 			POSITION += 2
 			try
-				@convertNumToBase(@handle.toString('hex', pos, pos + 2), 16, 10)
+				@hex2dec(@handle.toString('hex', pos, pos + 2))
 			catch e
 				console.error e
 
@@ -74,7 +84,7 @@ class NexradDecoder
 			pos = POSITION
 			POSITION += 4
 			try
-				@convertNumToBase(@handle.toString('hex', pos, pos + 4), 16, 10)
+				@hex2dec(@handle.toString('hex', pos, pos + 4))
 			catch e
 				console.error e
 
@@ -96,11 +106,10 @@ class NexradDecoder
 		pos = POSITION
 		POSITION += 1
 		data = @handle.toString('hex', pos, pos + 1)
-		# data = @convertNumToBase(@readByte(), 10, 16)
 		split_data = @str_split(data, 1)
 
-		length = @convertNumToBase(split_data[0], 16, 10)
-		value = @convertNumToBase(split_data[1], 16, 10)
+		length = @hex2dec(split_data[0])
+		value = @hex2dec(split_data[1])
 
 		if @description_block.mode is 1 and @description_block.code >= 16 and @description_block.code <= 21
 			if value >= 8
@@ -117,7 +126,7 @@ class NexradDecoder
 
 	dec2negdec: (val, bits) ->
 		binaryPadding = null
-		binaryValue = @convertNumToBase(val, 10, 2)
+		binaryValue = @dec2bin(val)
 
 		if val.length < bits
 			paddingBits = bits - binaryValue.length
@@ -131,7 +140,7 @@ class NexradDecoder
 			binaryValue = binaryValue.replace('0', 'x')
 			binaryValue = binaryValue.replace('1', '0')
 			binaryValue = binaryValue.replace('x', '1')
-			negDecimalValue = (@convertNumToBase(binaryValue, 2, 10) + 1) * -1
+			negDecimalValue = (@bin2dec(binaryValue) + 1) * -1
 
 			return negDecimalValue
 		else
@@ -272,9 +281,9 @@ class NexradDecoder
 	parseRasterLayers: () ->
 		@symbology_block.layerdivider = @readHalfWord()
 		@symbology_block.layerlength = @readWord()
-		@symbology_block.layerpacketcode = @convertNumToBase(@readHalfWord(), 10, 16)
-		@symbology_block.layerpacketcode2 = @convertNumToBase(@readHalfWord(), 10, 16)
-		@symbology_block.layerpacketcode3 = @convertNumToBase(@readHalfWord(), 10, 16)
+		@symbology_block.layerpacketcode = @dec2hex(@readHalfWord())
+		@symbology_block.layerpacketcode2 = @dec2hex(@readHalfWord())
+		@symbology_block.layerpacketcode3 = @dec2hex(@readHalfWord())
 		@symbology_block.i_coord_start = @readHalfWord()
 		@symbology_block.j_coord_start = @readHalfWord()
 		@symbology_block.x_scale_int = @readHalfWord()
@@ -286,9 +295,16 @@ class NexradDecoder
 		@symbology_block.row = {}
 
 		i = 0
+		len = parseInt @symbology_block.num_of_rows, 10
+		bar = new ProgressBar('  Processing... [:bar] :percent - Processing block :current of :total...',
+			complete: '='
+			incomplete: ' '
+			width: 20
+			total: len
+		);
 		while i < @symbology_block.num_of_rows
 			rowBytes = @readHalfWord()
-			if rowBytes is 'NaN'
+			if isNaN rowBytes
 				rowBytes = 0
 			@symbology_block.row[i] = {}
 			@symbology_block.row[i].data = []
@@ -297,14 +313,18 @@ class NexradDecoder
 			j = 0
 			while j < rowBytes
 				tempColorValues = @parseRLE()
-				@symbology_block.row[i].data = @symbology_block.row[i].data.concat tempColorValues
+				if @symbology_block.row[i].data?
+					@symbology_block.row[i].data = _.concat @symbology_block.row[i].data, tempColorValues
+				else
+					@symbology_block.row[i].data = tempColorValues
 				j++
+			bar.tick()
 			i++
 
 	parseRadialLayers: () ->
 		@symbology_block.layerdivider = @readHalfWord()
 		@symbology_block.layerlength = @readWord()
-		@symbology_block.layerpacketcode = @convertNumToBase(@readHalfWord(), 10, 16)
+		@symbology_block.layerpacketcode = @dec2hex(@readHalfWord())
 		@symbology_block.layerindexoffirstrangebin = @readHalfWord()
 		@symbology_block.layernumberofrangebins = @readHalfWord()
 		@symbology_block.i_centerofsweep = @readHalfWord()
@@ -312,35 +332,41 @@ class NexradDecoder
 		@symbology_block.scalefactor = @readHalfWord() / 1000
 		@symbology_block.numberofradials = @readHalfWord()
 
-		i = 1
+		i = 0
 		allAngles = []
 		@symbology_block.radial = {}
-		while i <= @symbology_block.numberofradials
+		len = parseInt @symbology_block.numberofradials, 10
+		bar = new ProgressBar('  Processing... [:bar] :percent - Processing block :current of :total...',
+			complete: '='
+			incomplete: ' '
+			width: 20
+			total: len
+		);
+		while i < @symbology_block.numberofradials
 			number_of_rles = @readHalfWord()
 			startAngle = @readHalfWord() / 10
 			allAngles.push startAngle
 			angleDelta = @readHalfWord() / 10
 
-			@symbology_block.radial[startAngle] = {}
-			@symbology_block.radial[startAngle].colorValues = {}
+			if !isNaN startAngle
+				@symbology_block.radial[startAngle] = {}
 
-			@symbology_block.radial[startAngle].numOfRLE = number_of_rles
-			@symbology_block.radial[startAngle].angledelta = angleDelta
-			@symbology_block.radial[startAngle].startangle = startAngle
+				@symbology_block.radial[startAngle].numOfRLE = number_of_rles
+				@symbology_block.radial[startAngle].angledelta = angleDelta
+				@symbology_block.radial[startAngle].startangle = startAngle
 
-			j = 1
-			allcolors = []
-			newcolors = []
-			while j <= number_of_rles * 2
-				tempColorValues = @parseRLE()
-				newcolors = newcolors.concat tempColorValues
-				allcolors[startAngle] = newcolors
-				j++
+				j = 0
+				allcolors = []
+				newcolors = []
 
-			k = 0
-			while k < allAngles.length
-				@symbology_block.radial[startAngle].colorValues = allcolors[allAngles[k]]
-				k++
+				while j < number_of_rles * 2
+					tempColorValues = @parseRLE()
+					if @symbology_block.radial[startAngle].colorValues?
+						@symbology_block.radial[startAngle].colorValues = _.concat @symbology_block.radial[startAngle].colorValues, tempColorValues
+					else
+						@symbology_block.radial[startAngle].colorValues = tempColorValues
+					j++
+			bar.tick()
 			i++
 
 	validateFile: () ->

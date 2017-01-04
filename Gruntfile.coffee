@@ -22,7 +22,6 @@ module.exports = (grunt) ->
 		clean:
 			docs: [
 				'api.md'
-				'docs/'
 			]
 		coffee:
 			compile:
