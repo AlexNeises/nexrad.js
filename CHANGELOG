@@ -1,18 +1,22 @@
+- 1.1.1
+	Added index.html
+	Test render of radar data
+
 - 1.1.0
 	Added 1.1 api
 	Readded docs folder
 
 - 1.0.4
-	Documentation fix.
+	Documentation fix
 
 - 1.0.3
-	Removed docs folder.
+	Removed docs folder
 
 - 1.0.2
-	Added error handling and various routes.
+	Added error handling and various routes
 
 - 1.0.1
-	Created temp directory if it didn't exist.
+	Created temp directory if it didn't exist
 
 - 1.0.0
-	Initial commit.
+	Initial commit
