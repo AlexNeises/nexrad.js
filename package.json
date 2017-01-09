@@ -1,7 +1,7 @@
 {
   "name": "nexrad.js",
   "version": "1.1.1",
-  "description": "A JavaScript processor for WSR-88D NEXRAD radar data.\n\nTo install, run `npm install`.\n\nStart the server by renaming `config.default.json` to `config.json` and running `npm start`.\n\nv1.0.0 has been deprecated and will be removed in v2.0.0.",
+  "description": "A JavaScript processor for WSR-88D NEXRAD radar data.\n\nTo install, run `npm install; bower install`.\n\nStart the server by renaming `config.default.json` to `config.json` and running `npm start`.\n\nv1.0.0 has been deprecated and will be removed in v2.0.0.",
   "apidoc": {
     "title": "nexrad.js API documentation"
   },
