@@ -2,7 +2,7 @@
 
 A JavaScript processor for WSR-88D NEXRAD radar data.
 
-To install, run `npm install`.
+To install, run `npm install; bower install`.
 
 Start the server by renaming `config.default.json` to `config.json` and running `npm start`.
 
