@@ -1,4 +1,4 @@
-# nexrad.js v1.1.0
+# nexrad.js v1.1.1
 
 A JavaScript processor for WSR-88D NEXRAD radar data.
 
@@ -12,6 +12,7 @@ v1.0.0 has been deprecated and will be removed in v2.0.0.
 	- [Description Data](#description-data)
 	- [Graphic Alphanumeric Data](#graphic-alphanumeric-data)
 	- [Header Data](#header-data)
+	- [All Radial Data](#all-radial-data)
 	- [Symbology Data (Raster)](#symbology-data-(raster))
 	- [Symbology Data (Radial)](#symbology-data-(radial))
 	
@@ -143,6 +144,63 @@ HTTP/1.1 200 OK
         "code": "27",
         "date": "2012-06-19T17:00:00.000Z",
         "numberOfBlocks": "3"
+    }
+}
+```
+### Error Response
+
+Error Response:
+```json
+HTTP/1.1 4xx
+{
+    "status": "4xx",
+    "error": "Error description"
+}
+```
+## All Radial Data
+
+Returns all processed radial blocks
+
+	POST /v1.1/nexrad/radial
+
+
+### Parameters
+
+| Name    | Type      | Description                          |
+|---------|-----------|--------------------------------------|
+| file			| Binary			|  NEXRAD-specific binary data file							|
+
+### Success Response
+
+Success Response:
+```json
+HTTP/1.1 200 OK
+{
+    "headers": {
+        "code": "27",
+        "date": "2012-06-19T17:00:00.000Z",
+        "numberOfBlocks": "3"
+    },
+    "description": {
+        "divider": -1,
+        "latitude": 35.333,
+        "tabularoffset": "0"
+    },
+    "symbology": {
+        "divider": "65535",
+        "blockid": "1",
+        "radial": {
+            "0": {
+                "colorValues": [
+                    "0",
+                    "0",
+                    "0"
+                ],
+                "numOfRLE": "19",
+                "angledelta": 0.9,
+                "startangle": 136.1
+            }
+        }
     }
 }
 ```

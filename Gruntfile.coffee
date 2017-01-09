@@ -24,12 +24,20 @@ module.exports = (grunt) ->
 				'api.md'
 			]
 		coffee:
-			compile:
+			server:
 				files: [
 					expand: true
-					cwd: 'src/'
+					cwd: 'src/server/'
 					src: ['**/*.coffee']
 					dest: '.'
+					ext: '.js'
+				]
+			client:
+				files: [
+					expand: true
+					cwd: 'src/client/'
+					src: ['**/*.coffee']
+					dest: './static/'
 					ext: '.js'
 				]
 

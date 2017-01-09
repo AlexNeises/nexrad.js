@@ -12,7 +12,101 @@ baseurl2 = "/#{version2}/nexrad"
 
 app = express()
 app.use busboy()
+app.use express.static __dirname + '/'
 app.use '/docs', express.static __dirname + '/docs'
+app.use '/static', [ express.static __dirname + '/bower_components', express.static __dirname + '/static' ]
+
+###
+@api {post} /v1.1/nexrad/radial All Radial Data
+@apiGroup Nexrad
+@apiVersion 1.1.0
+@apiParam {Binary} file NEXRAD-specific binary data file
+@apiDescription Returns all processed radial blocks
+@apiError (409 Conflict) Conflict No file uploaded
+@apiError (415 Unsupported Media Type) UnsupportedMediaType File is not valid NEXRAD data
+@apiErrorExample {json} Error Response:
+HTTP/1.1 4xx
+{
+    "status": "4xx",
+    "error": "Error description"
+}
+@apiSuccess (200 OK) {Object} headers Decoded header block
+@apiSuccessExample {json} Success Response:
+HTTP/1.1 200 OK
+{
+    "headers": {
+        "code": "27",
+        "date": "2012-06-19T17:00:00.000Z",
+        "numberOfBlocks": "3"
+    },
+    "description": {
+        "divider": -1,
+        "latitude": 35.333,
+        "tabularoffset": "0"
+    },
+    "symbology": {
+        "divider": "65535",
+        "blockid": "1",
+        "radial": {
+            "0": {
+                "colorValues": [
+                    "0",
+                    "0",
+                    "0"
+                ],
+                "numOfRLE": "19",
+                "angledelta": 0.9,
+                "startangle": 136.1
+            }
+        }
+    }
+}
+###
+app.post "#{baseurl2}/radial", (req, res, next) ->
+	if not fs.existsSync 'tmp_uploads/'
+		fs.mkdirSync 'tmp_uploads/'
+	if req.busboy?
+		req.pipe req.busboy
+		req.busboy.on 'file', (fieldname, file, filename, encoding, mimetype) ->
+			console.log "Uploading #{filename} with #{encoding} encoding and #{mimetype} mimetype"
+
+			fstream = fs.createWriteStream __dirname + '/tmp_uploads/' + filename
+			file.pipe fstream
+			fstream.on 'close', () ->
+				console.log "Finished uploading #{filename}"
+				file = 'tmp_uploads/' + filename
+				if file?
+					radar = new nx.NexradDecoder()
+					radar.setFileResource file
+					if radar.validateFile() is -1
+						headers = radar.parseMHB()
+						description = radar.parsePDB()
+						symbology = radar.parsePSB('radial')
+						console.log 'Returning processed data.'
+						res.json
+							headers: headers
+							description: description
+							symbology: symbology
+						fs.remove "tmp_uploads/#{filename}", (err) ->
+							if err
+								console.error err
+							else
+								console.log "#{filename} successfully removed."
+					else
+						res.status 415
+						res.json
+							status: 415
+							error: "File is not valid NEXRAD data"
+						fs.remove "tmp_uploads/#{filename}", (err) ->
+							if err
+								console.error err
+							else
+								console.log "#{filename} successfully removed."
+	else
+		res.status 409
+		res.json
+			status: 409
+			error: "No file uploaded"
 
 ###
 @api {post} /v1.1/nexrad/headers Header Data
