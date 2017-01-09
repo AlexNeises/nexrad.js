@@ -1,0 +1,20 @@
+{
+  "name": "nexrad.js",
+  "description": "A JavaScript processor for WSR-88D NEXRAD radar data.",
+  "main": "server.js",
+  "authors": [
+    "Alex Neises"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/AlexNeises/nexrad.js",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "svg.js": "^2.3.6"
+  }
+}
