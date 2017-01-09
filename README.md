@@ -1,8 +1,8 @@
-# nexrad.js v1.1.0
+# nexrad.js v1.1.1
 
 A JavaScript processor for WSR-88D NEXRAD radar data.
 
-To install, run `npm install; bower install`.
+To install, run `npm install`.
 
 Start the server by renaming `config.default.json` to `config.json` and running `npm start`.
 
