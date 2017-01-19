@@ -48,3 +48,4 @@ module.exports = (grunt) ->
 
 	grunt.registerTask 'default', ['string-replace', 'clean', 'coffee']
 	grunt.registerTask 'gendocs', ['apidoc']
+	grunt.registerTask 'develop', ['coffee']

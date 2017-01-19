@@ -16,6 +16,10 @@ app.use express.static __dirname + '/'
 app.use '/docs', express.static __dirname + '/docs'
 app.use '/static', [ express.static __dirname + '/bower_components', express.static __dirname + '/static' ]
 
+# radar = new nx.L2D()
+# radar.setFileResource 'KTLX20130520_210330_V06'
+# console.log radar.parseMHB()
+
 ###
 @api {post} /v1.1/nexrad/radial All Radial Data
 @apiGroup Nexrad
@@ -76,7 +80,7 @@ app.post "#{baseurl2}/radial", (req, res, next) ->
 				console.log "Finished uploading #{filename}"
 				file = 'tmp_uploads/' + filename
 				if file?
-					radar = new nx.NexradDecoder()
+					radar = new nx.L3D()
 					radar.setFileResource file
 					if radar.validateFile() is -1
 						headers = radar.parseMHB()
@@ -147,7 +151,7 @@ app.post "#{baseurl2}/headers", (req, res, next) ->
 				console.log "Finished uploading #{filename}"
 				file = 'tmp_uploads/' + filename
 				if file?
-					radar = new nx.NexradDecoder()
+					radar = new nx.L3D()
 					radar.setFileResource file
 					if radar.validateFile() is -1
 						headers = radar.parseMHB()
@@ -214,7 +218,7 @@ app.post "#{baseurl2}/description", (req, res, next) ->
 				console.log "Finished uploading #{filename}"
 				file = 'tmp_uploads/' + filename
 				if file?
-					radar = new nx.NexradDecoder()
+					radar = new nx.L3D()
 					radar.setFileResource file
 					if radar.validateFile() is -1
 						headers = radar.parseMHB()
@@ -293,7 +297,7 @@ app.post "#{baseurl2}/symbology/radial", (req, res, next) ->
 				console.log "Finished uploading #{filename}"
 				file = 'tmp_uploads/' + filename
 				if file?
-					radar = new nx.NexradDecoder()
+					radar = new nx.L3D()
 					radar.setFileResource file
 					if radar.validateFile() is -1
 						headers = radar.parseMHB()
@@ -371,7 +375,7 @@ app.post "#{baseurl2}/symbology/raster", (req, res, next) ->
 				console.log "Finished uploading #{filename}"
 				file = 'tmp_uploads/' + filename
 				if file?
-					radar = new nx.NexradDecoder()
+					radar = new nx.L3D()
 					radar.setFileResource file
 					if radar.validateFile() is -1
 						headers = radar.parseMHB()
@@ -462,7 +466,7 @@ app.post "#{baseurl2}/graphic_alpha", (req, res, next) ->
 				console.log "Finished uploading #{filename}"
 				file = 'tmp_uploads/' + filename
 				if file?
-					radar = new nx.NexradDecoder()
+					radar = new nx.L3D()
 					radar.setFileResource file
 					if radar.validateFile() is -1
 						headers = radar.parseMHB()
@@ -582,7 +586,7 @@ app.post "#{baseurl1}/radial", (req, res, next) ->
 				console.log "Finished uploading #{filename}"
 				file = 'tmp_uploads/' + filename
 				if file?
-					radar = new nx.NexradDecoder()
+					radar = new nx.L3D()
 					radar.setFileResource file
 					if radar.validateFile() is -1
 						headers = radar.parseMHB()
@@ -655,7 +659,7 @@ app.post "#{baseurl1}/radial/headers", (req, res, next) ->
 				console.log "Finished uploading #{filename}"
 				file = 'tmp_uploads/' + filename
 				if file?
-					radar = new nx.NexradDecoder()
+					radar = new nx.L3D()
 					radar.setFileResource file
 					if radar.validateFile() is -1
 						headers = radar.parseMHB()
@@ -722,7 +726,7 @@ app.post "#{baseurl1}/radial/description", (req, res, next) ->
 				console.log "Finished uploading #{filename}"
 				file = 'tmp_uploads/' + filename
 				if file?
-					radar = new nx.NexradDecoder()
+					radar = new nx.L3D()
 					radar.setFileResource file
 					if radar.validateFile() is -1
 						headers = radar.parseMHB()
@@ -801,7 +805,7 @@ app.post "#{baseurl1}/radial/symbology", (req, res, next) ->
 				console.log "Finished uploading #{filename}"
 				file = 'tmp_uploads/' + filename
 				if file?
-					radar = new nx.NexradDecoder()
+					radar = new nx.L3D()
 					radar.setFileResource file
 					if radar.validateFile() is -1
 						headers = radar.parseMHB()
@@ -892,7 +896,7 @@ app.post "#{baseurl1}/radial/graphic_alpha", (req, res, next) ->
 				console.log "Finished uploading #{filename}"
 				file = 'tmp_uploads/' + filename
 				if file?
-					radar = new nx.NexradDecoder()
+					radar = new nx.L3D()
 					radar.setFileResource file
 					if radar.validateFile() is -1
 						headers = radar.parseMHB()

@@ -4,7 +4,7 @@ ProgressBar = require 'progress'
 
 POSITION = 0
 
-class NexradDecoder
+class L3D
 	constructor: () ->
 		@handle = null
 		@filename = null
@@ -411,5 +411,175 @@ class NexradDecoder
 			i++
 		return @graphic_block
 
+class L2D
+	constructor: () ->
+		@handle = null
+		@filename = null
+
+		@msg_header_block = null
+		@msg_header_block_offset = null
+
+		@description_block = null
+		@description_block_offset = null
+
+		@symbology_block = null
+		@symbology_block_offset = null
+
+		@graphic_block = null
+		@graphic_block_offset = null
+
+		@initializeVariables()
+
+	initializeVariables: () ->
+		@msg_header_block = {}
+		@description_block = {}
+		@symbology_block = {}
+		@graphic_block = {}
+
+		@msg_header_block_offset = 0
+		@description_block_offset = 48
+
+	setFileResource: (file) ->
+		@filename = file
+		@handle = fs.readFileSync file
+
+	hex2dec: (num) ->
+		return parseInt(num, 16).toString(10)
+
+	dec2hex: (num) ->
+		return parseInt(num, 10).toString(16)
+
+	bin2dec: (num) ->
+		return parseInt(num, 2).toString(10)
+
+	dec2bin: (num) ->
+		return parseInt(num, 10).toString(2)
+	
+	readByte: (negativeRange = false) ->
+		pos = POSITION
+		POSITION += 1
+		try
+			@hex2dec(@handle.toString('hex', pos, pos + 1))
+		catch e
+			console.error e
+
+	readHalfWord: (negativeRange = false) ->
+		if negativeRange
+			pos = POSITION
+			POSITION += 2
+			try
+				@dec2negdec @handle.readInt16BE pos
+			catch e
+				console.error e
+		else
+			pos = POSITION
+			POSITION += 2
+			try
+				@hex2dec(@handle.toString('hex', pos, pos + 2))
+			catch e
+				console.error e
+
+	readWord: (negativeRange = false) ->
+		if negativeRange
+			pos = POSITION
+			POSITION += 4
+			try
+				@dec2negdec @handle.readInt32BE pos
+			catch e
+				console.error e
+		else
+			pos = POSITION
+			POSITION += 4
+			try
+				@hex2dec(@handle.toString('hex', pos, pos + 4))
+			catch e
+				console.error e
+
+	readString: (size) ->
+		pos = POSITION
+		POSITION += size
+		try
+			@handle.toString('utf8', pos, pos + size)
+		catch e
+			console.error e
+
+	str_split: (string, splitLength) ->
+		if splitLength is null
+			splitLength = 1
+		if string is null or splitLength < 1
+			return false
+		string += ''
+		chunks = []
+		pos = 0
+		len = string.length
+		while pos < len
+			chunks.push(string.slice(pos, pos += splitLength))
+		return chunks
+
+	dec2negdec: (val, bits) ->
+		binaryPadding = null
+		binaryValue = @dec2bin(val)
+
+		if val.length < bits
+			paddingBits = bits - binaryValue.length
+			i = 1
+			while i <= paddingBits
+				binaryPadding += '0'
+				i++
+			binaryValue = binaryPadding + binaryValue
+
+		if binaryValue[0] is 1
+			binaryValue = binaryValue.replace('0', 'x')
+			binaryValue = binaryValue.replace('1', '0')
+			binaryValue = binaryValue.replace('x', '1')
+			negDecimalValue = (@bin2dec(binaryValue) + 1) * -1
+
+			return negDecimalValue
+		else
+			return val
+
+	sec2hms: (sec) ->
+		d = Number(sec)
+		h = Math.floor(d / 3600)
+		m = Math.floor(d % 3600 / 60)
+		s = Math.floor(d % 3600 % 60)
+		(if h > 0 then h + ':' + (if m < 10 then '0' else '') else '') + m + ':' + (if s < 10 then '0' else '') + s
+
+	julianToGregorian: (n) ->
+		a = n + 32044
+		b = Math.floor((4 * a + 3) / 146097)
+		c = a - Math.floor(146097 * b / 4)
+		d = Math.floor((4 * c + 3) / 1461)
+		e = c - Math.floor(1461 * d / 4)
+		f = Math.floor((5 * e + 2) / 153)
+		D = e + 1 - Math.floor((153 * f + 2) / 5)
+		M = f + 3 - 12 - Math.round(f / 10)
+		Y = 100 * b + d - 4800 + Math.floor(f / 10)
+		new Date(Y, M, D)
+
+	getDate: (n) ->
+		ms = n * 24 * 60 * 60 * 1000
+		d = new Date ms
+
+	parseMHB: () ->
+		console.log 'Processing headers...'
+		POSITION = @msg_header_block_offset
+		@msg_header_block.tape = @readString(9)
+		@msg_header_block.extension = @readString(3)
+		@msg_header_block.date = @getDate(@readWord())
+		@msg_header_block.time = @readWord()
+		@msg_header_block.icao = @readString(4)
+		POSITION += 12
+		@msg_header_block.msg_size = @readHalfWord()
+		@msg_header_block.channels = @readByte()
+		@msg_header_block.type = @readByte()
+		@msg_header_block.seq_id = @readHalfWord()
+		@msg_header_block.jdate = @readHalfWord()
+		@msg_header_block.msday = @readWord()
+		@msg_header_block.msg_seg = @readHalfWord()
+
+		return @msg_header_block
+
 root = exports ? window
-root.NexradDecoder = NexradDecoder
+root.L3D = L3D
+root.L2D = L2D

@@ -10,7 +10,8 @@
     "gendocs": "./node_modules/.bin/grunt gendocs",
     "apidoc": "./node_modules/.bin/apidoc-markdown -p docs/ -o api.md",
     "grunt": "./node_modules/.bin/grunt",
-    "start": "npm run gendocs && npm run apidoc && npm run grunt && node server.js"
+    "start": "npm run gendocs && npm run apidoc && npm run grunt && node server.js",
+    "develop": "./node_modules/.bin/grunt develop && node server.js"
   },
   "repository": {
     "type": "git",

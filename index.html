@@ -3,22 +3,22 @@
 <head>
 	<meta charset="UTF-8">
 	<title>Radar Tiles</title>
-	<script type="text/javascript" src="/static/svg.js/dist/svg.min.js"></script>
 	<script type="text/javascript" src="/static/lodash/dist/lodash.min.js"></script>
+	<script src="https://d3js.org/d3.v4.min.js"></script>
 	<style>
+		svg,
+		canvas {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+		}
 		body {
 			background: #000000;
-		}
-		#radar {
-			position: relative;
-			display: inline-block;
-			border-radius: 50%;
-			overflow: hidden;
 		}
 	</style>
 </head>
 <body>
-	<div id="radar"></div>
 	<script type="text/javascript" src="/static/nx0.json"></script>
 	<script type="text/javascript" src="/static/svg.js"></script>
 </body>
