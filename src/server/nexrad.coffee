@@ -419,25 +419,22 @@ class L2D
 		@msg_header_block = null
 		@msg_header_block_offset = null
 
-		@description_block = null
-		@description_block_offset = null
+		@msg_volume_block = null
+		@msg_volume_block_offset = null
 
-		@symbology_block = null
-		@symbology_block_offset = null
-
-		@graphic_block = null
-		@graphic_block_offset = null
+		@msg_block = null
+		@msg_block_offset = null
 
 		@initializeVariables()
 
 	initializeVariables: () ->
 		@msg_header_block = {}
-		@description_block = {}
-		@symbology_block = {}
-		@graphic_block = {}
-
+		@msg_volume_block = {}
+		@msg_block = {}
+		
 		@msg_header_block_offset = 0
-		@description_block_offset = 48
+		@msg_volume_block_offset = 36
+		@msg_block_offset = 52
 
 	setFileResource: (file) ->
 		@filename = file
@@ -569,16 +566,53 @@ class L2D
 		@msg_header_block.date = @getDate(@readWord())
 		@msg_header_block.time = @readWord()
 		@msg_header_block.icao = @readString(4)
-		POSITION += 12
-		@msg_header_block.msg_size = @readHalfWord()
-		@msg_header_block.channels = @readByte()
-		@msg_header_block.type = @readByte()
-		@msg_header_block.seq_id = @readHalfWord()
-		@msg_header_block.jdate = @readHalfWord()
-		@msg_header_block.msday = @readWord()
-		@msg_header_block.msg_seg = @readHalfWord()
 
 		return @msg_header_block
+
+	parseVHB: () ->
+		console.log 'Processing volume headers...'
+		POSITION = @msg_volume_block_offset
+		@msg_volume_block.size = @readHalfWord()
+		@msg_volume_block.channel = @readByte()
+		@msg_volume_block.msg_type = @readByte()
+		@msg_volume_block.seq_num = @readHalfWord()
+		@msg_volume_block.date = @readHalfWord()
+		@msg_volume_block.time_ms = @readWord()
+		@msg_volume_block.num_segments = @readHalfWord()
+		@msg_volume_block.seg_num = @readHalfWord()
+
+		return @msg_volume_block
+
+	parseSegments: (segments) ->
+		i = 1
+		j = 0
+		while i <= segments
+			@msg_block[i] = {}
+			while j < 360
+				@msg_block[i][j] = {}
+				@msg_block[i][j].num_rng_zones = @readHalfWord()
+				@msg_block[i][j].op_code = @readHalfWord()
+				@msg_block[i][j].end_rng = @readHalfWord()
+				# k = 0
+				# while k < @msg_block[i][j].num_rng_zones
+					# @msg_block[i][j][k] = {}
+					# @msg_block[i][j][k].op_code = @readHalfWord()
+					# @msg_block[i][j][k].stop_rng = @readHalfWord()
+					# k++
+				j++
+			i++
+
+	parseMSG15: () ->
+		console.log 'Processing message 15...'
+		POSITION = @msg_block_offset
+		@msg_block.gen_date = @readHalfWord()
+		@msg_block.gen_time = @readHalfWord()
+		@msg_block.elev_segs = @readHalfWord()
+
+		@parseSegments(@msg_block.elev_segs)
+
+		return @msg_block
+
 
 root = exports ? window
 root.L3D = L3D

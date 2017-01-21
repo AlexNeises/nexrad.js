@@ -5,8 +5,20 @@
 	<title>Radar Tiles</title>
 	<script type="text/javascript" src="/static/lodash/dist/lodash.min.js"></script>
 	<script src="https://d3js.org/d3.v4.min.js"></script>
+	<script src="https://d3js.org/topojson.v2.min.js"></script>
 	<style>
-		svg,
+		.land {
+			fill: #222222;
+		}
+		.county-boundary {
+			fill: none;
+			stroke: #000000;
+			stroke-width: 0.5px;
+		}
+		.state-boundary {
+			fill: none;
+			stroke: #000000;
+		}
 		canvas {
 			position: absolute;
 			top: 50%;

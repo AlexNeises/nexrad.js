@@ -17,8 +17,9 @@ app.use '/docs', express.static __dirname + '/docs'
 app.use '/static', [ express.static __dirname + '/bower_components', express.static __dirname + '/static' ]
 
 # radar = new nx.L2D()
-# radar.setFileResource 'KTLX20130520_210330_V06'
+# radar.setFileResource 'KTLX20130520_201643_V06'
 # console.log radar.parseMHB()
+# console.log radar.parseVHB()
 
 ###
 @api {post} /v1.1/nexrad/radial All Radial Data
