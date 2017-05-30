@@ -105,11 +105,12 @@ class L3D
 		valueArray = []
 		pos = POSITION
 		POSITION += 1
+		# console.log pos
 		data = @handle.toString('hex', pos, pos + 1)
 		split_data = @str_split(data, 1)
-
 		length = @hex2dec(split_data[0])
 		value = @hex2dec(split_data[1])
+		# console.log length, value
 
 		if @description_block.mode is 1 and @description_block.code >= 16 and @description_block.code <= 21
 			if value >= 8
@@ -121,7 +122,6 @@ class L3D
 		while i <= length
 			valueArray.push value
 			i++
-
 		return valueArray
 
 	dec2negdec: (val, bits) ->
@@ -304,6 +304,7 @@ class L3D
 		);
 		while i < @symbology_block.num_of_rows
 			rowBytes = @readHalfWord()
+			console.log rowBytes
 			if isNaN rowBytes
 				rowBytes = 0
 			@symbology_block.row[i] = {}

@@ -3,7 +3,13 @@ busboy = require 'connect-busboy'
 fs = require 'fs-extra'
 
 nx = require './nexrad'
+sounding = require './sounding'
 config = require './config'
+
+# sounding = require './sounding/plot'
+
+# plt = new sounding.Plot()
+# plt.createBoundaryRect(1, 200, 300)
 
 version1 = 'v1'
 version2 = 'v1.1'
@@ -16,8 +22,8 @@ app.use express.static __dirname + '/'
 app.use '/docs', express.static __dirname + '/docs'
 app.use '/static', [ express.static __dirname + '/bower_components', express.static __dirname + '/static' ]
 
-# radar = new nx.L2D()
-# radar.setFileResource 'KTLX20130520_201643_V06'
+radar = new nx.L2D()
+radar.setFileResource __dirname + '/KTLX20130520_201643_V06'
 # console.log radar.parseMHB()
 # console.log radar.parseVHB()
 

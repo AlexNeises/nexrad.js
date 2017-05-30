@@ -27,8 +27,10 @@
     "async": "^2.1.4",
     "cluster": "^0.7.7",
     "connect-busboy": "0.0.2",
+    "d3": "^4.7.3",
     "express": "^4.14.0",
     "fs-extra": "^1.0.0",
+    "jsdom": "^9.12.0",
     "lodash": "^4.17.4",
     "progress": "^1.1.8"
   },

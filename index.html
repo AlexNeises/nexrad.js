@@ -1,37 +1,255 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
-	<meta charset="UTF-8">
-	<title>Radar Tiles</title>
-	<script type="text/javascript" src="/static/lodash/dist/lodash.min.js"></script>
-	<script src="https://d3js.org/d3.v4.min.js"></script>
-	<script src="https://d3js.org/topojson.v2.min.js"></script>
-	<style>
-		.land {
-			fill: #222222;
-		}
-		.county-boundary {
-			fill: none;
-			stroke: #000000;
-			stroke-width: 0.5px;
-		}
-		.state-boundary {
-			fill: none;
-			stroke: #000000;
-		}
-		canvas {
-			position: absolute;
-			top: 50%;
-			left: 50%;
-			transform: translate(-50%, -50%);
-		}
-		body {
-			background: #000000;
-		}
-	</style>
-</head>
-<body>
-	<script type="text/javascript" src="/static/nx0.json"></script>
-	<script type="text/javascript" src="/static/svg.js"></script>
-</body>
+<html>
+	<head>
+		<meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+		<meta charset="utf-8">
+		<title>Nexview 3</title>
+		<link rel="icon" type="image/png" href="../static/favicon.png">
+		<style>
+			#map {
+				height: 100%;
+			}
+			html, body {
+				height: 100%;
+				margin: 0;
+				padding: 0;
+			}
+			#coords {
+				background-color: black;
+				color: white;
+				padding: 5px;
+			}
+		</style>
+	</head>
+	<body>
+		<div id="map"></div>
+		<div id="coords"></div>
+		<script src="https://maps.googleapis.com/maps/api/js?key=XXXX"></script>
+		<script>
+			RadarOverlay.prototype = new google.maps.OverlayView();
+			function initMap() {
+				var map = new google.maps.Map(document.getElementById('map'), {
+					center: {lat: 0, lng: 0},
+					zoom: 2,
+					minZoom: 1,
+					maxZoom: 12,
+					backgroundColor: '#2F4F4F',
+					streetViewControl: false,
+					mapTypeId: google.maps.MapTypeId.ROADMAP,
+					styles: [{"elementType": "geometry","stylers": [{"color": "#111d1d"},{"visibility": "on"}]},{"elementType": "labels","stylers": [{"visibility": "off"}]},{"elementType": "labels.icon","stylers": [{"visibility": "off"}]},{"elementType": "labels.text","stylers": [{"visibility": "off"}]},{"elementType": "labels.text.fill","stylers": [{"visibility": "off"}]},{"elementType": "labels.text.stroke","stylers": [{"visibility": "off"}]},{"featureType": "administrative","elementType": "geometry","stylers": [{"visibility": "off"}]},{"featureType": "administrative","elementType": "labels","stylers": [{"visibility": "off"}]},{"featureType": "administrative.country","elementType": "labels","stylers": [{"visibility": "off"}]},{"featureType": "administrative.land_parcel","stylers": [{"visibility": "off"}]},{"featureType": "administrative.locality","elementType": "labels","stylers": [{"visibility": "off"}]},{"featureType": "administrative.neighborhood","stylers": [{"visibility": "off"}]},{"featureType": "administrative.province","elementType": "labels","stylers": [{"visibility": "off"}]},{"featureType": "landscape","stylers": [{"visibility": "on"}]},{"featureType": "landscape","elementType": "labels","stylers": [{"visibility": "off"}]},{"featureType": "landscape.man_made","elementType": "labels","stylers": [{"visibility": "off"}]},{"featureType": "landscape.natural","stylers": [{"visibility": "on"}]},{"featureType": "landscape.natural","elementType": "labels","stylers": [{"visibility": "off"}]},{"featureType": "landscape.natural.landcover","stylers": [{"color": "#2f4f4f"},{"visibility": "off"}]},{"featureType": "landscape.natural.landcover","elementType": "labels","stylers": [{"visibility": "off"}]},{"featureType": "landscape.natural.terrain","elementType": "labels","stylers": [{"visibility": "off"}]},{"featureType": "poi","stylers": [{"visibility": "off"}]},{"featureType": "poi","elementType": "labels","stylers": [{"visibility": "off"}]},{"featureType": "road","stylers": [{"visibility": "off"}]},{"featureType": "road","elementType": "labels","stylers": [{"visibility": "off"}]},{"featureType": "road","elementType": "labels.icon","stylers": [{"visibility": "off"}]},{"featureType": "transit","stylers": [{"visibility": "off"}]},{"featureType": "transit","elementType": "labels","stylers": [{"visibility": "off"}]},{"featureType": "water","stylers": [{"color": "#2f4f4f"}]},{"featureType": "water","elementType": "labels","stylers": [{"visibility": "off"}]}]
+				});
+
+				var roadBounds = {
+					1: [[google.maps.LatLng(19.396308, -66.885444), google.maps.LatLng(19.396308, -124.8848974)], [google.maps.LatLng(61.139458, -66.885444), google.maps.LatLng(61.139458, -124.8848974)]],
+					2: [[google.maps.LatLng(19.396308, -66.885444), google.maps.LatLng(19.396308, -124.8848974)], [google.maps.LatLng(61.139458, -66.885444), google.maps.LatLng(61.139458, -124.8848974)]],
+					3: [[google.maps.LatLng(19.396308, -66.885444), google.maps.LatLng(19.396308, -124.8848974)], [google.maps.LatLng(61.139458, -66.885444), google.maps.LatLng(61.139458, -124.8848974)]],
+					4: [[google.maps.LatLng(19.396308, -66.885444), google.maps.LatLng(19.396308, -124.8848974)], [google.maps.LatLng(61.139458, -66.885444), google.maps.LatLng(61.139458, -124.8848974)]]
+				};
+
+				var roadMapType = new google.maps.ImageMapType({
+					getTileUrl: function(coord, zoom) {
+						if (zoom < 1 || zoom > 4 ||
+							roadBounds[zoom][0][0] > coord.x || coord.x > roadBounds[zoom][0][1] ||
+							roadBounds[zoom][1][0] > coord.y || coord.y > roadBounds[zoom][1][1]) {
+								return null;
+							}
+						var newbound = Math.pow(2, zoom);
+						return ['../static/roads/', zoom, '/', coord.x, '/', (newbound - coord.y - 1), '.png'].join('');
+					},
+					tileSize: new google.maps.Size(256, 256)
+				});
+
+				map.overlayMapTypes.push(roadMapType);
+
+				var coordsDiv = document.getElementById('coords');
+				map.controls[google.maps.ControlPosition.TOP_CENTER].push(coordsDiv);
+				map.addListener('mousemove', function(event) {
+					coordsDiv.textContent =
+						'lat: ' + Math.round(event.latLng.lat()) + ', ' +
+						'lng: ' + Math.round(event.latLng.lng());
+				});
+
+				map.data.setStyle(function(feature) {
+					return {
+						title: feature.getProperty('name'),
+						optimized: false
+					};
+				});
+				map.data.addGeoJson(cities);
+
+				var inc = 0.5
+				var bounds = []
+				var srcimg = []
+				var overlay = []
+				var product = 'N0U'
+				for(var x = 1; x <= 10; x++) {
+					bounds[x] = []
+					srcimg[x] = []
+					overlay[x] = []
+					for(var y = 1; y <= 8; y++) {
+						bounds[x][y] = new google.maps.LatLngBounds(
+							new google.maps.LatLng(35.33306-2.0+(y-1)*inc, -97.2775-2.5+(x-1)*inc),
+							new google.maps.LatLng(35.33306-1.5+(y-1)*inc, -97.2775-2.0+(x-1)*inc)
+						);
+						srcimg[x][y] = '../static/KTLX/201305202016/' + product + '/xs/' + x + '_' + y + '.png';
+						overlay[x][y] = new RadarOverlay(bounds[x][y], srcimg[x][y], map);
+					}
+				}
+
+				google.maps.event.addListener(map, 'zoom_changed', function() {
+					for(var x = 1; x <= (overlay.length-1); x++) {
+						for(var y = 1; y <= (overlay[x].length-1); y++) {
+							overlay[x][y].setMap(null);
+						}
+					}
+					if (map.getZoom() < 8) {
+						for(var x = 1; x <= 10; x++) {
+							bounds[x] = []
+							srcimg[x] = []
+							overlay[x] = []
+							for(var y = 1; y <= 8; y++) {
+								bounds[x][y] = new google.maps.LatLngBounds(
+									new google.maps.LatLng(35.33306-2.0+(y-1)*inc, -97.2775-2.5+(x-1)*inc),
+									new google.maps.LatLng(35.33306-1.5+(y-1)*inc, -97.2775-2.0+(x-1)*inc)
+								);
+								srcimg[x][y] = '../static/KTLX/201305202016/' + product + '/xs/' + x + '_' + y + '.png';
+								overlay[x][y] = new RadarOverlay(bounds[x][y], srcimg[x][y], map);
+							}
+						}
+					}
+					else if (map.getZoom() >= 8 && map.getZoom() < 10) {
+						for(var x = 1; x <= 10; x++) {
+							bounds[x] = []
+							srcimg[x] = []
+							overlay[x] = []
+							for(var y = 1; y <= 8; y++) {
+								bounds[x][y] = new google.maps.LatLngBounds(
+									new google.maps.LatLng(35.33306-2.0+(y-1)*inc, -97.2775-2.5+(x-1)*inc),
+									new google.maps.LatLng(35.33306-1.5+(y-1)*inc, -97.2775-2.0+(x-1)*inc)
+								);
+								srcimg[x][y] = '../static/KTLX/201305202016/' + product + '/sm/' + x + '_' + y + '.png';
+								overlay[x][y] = new RadarOverlay(bounds[x][y], srcimg[x][y], map);
+							}
+						}
+					}
+					else if (map.getZoom() >= 10 && map.getZoom() < 12) {
+						for(var x = 1; x <= 10; x++) {
+							bounds[x] = []
+							srcimg[x] = []
+							overlay[x] = []
+							for(var y = 1; y <= 8; y++) {
+								bounds[x][y] = new google.maps.LatLngBounds(
+									new google.maps.LatLng(35.33306-2.0+(y-1)*inc, -97.2775-2.5+(x-1)*inc),
+									new google.maps.LatLng(35.33306-1.5+(y-1)*inc, -97.2775-2.0+(x-1)*inc)
+								);
+								srcimg[x][y] = '../static/KTLX/201305202016/' + product + '/md/' + x + '_' + y + '.png';
+								overlay[x][y] = new RadarOverlay(bounds[x][y], srcimg[x][y], map);
+							}
+						}
+					}
+					else {
+						for(var x = 1; x <= 10; x++) {
+							bounds[x] = []
+							srcimg[x] = []
+							overlay[x] = []
+							for(var y = 1; y <= 8; y++) {
+								bounds[x][y] = new google.maps.LatLngBounds(
+									new google.maps.LatLng(35.33306-2.0+(y-1)*inc, -97.2775-2.5+(x-1)*inc),
+									new google.maps.LatLng(35.33306-1.5+(y-1)*inc, -97.2775-2.0+(x-1)*inc)
+								);
+								srcimg[x][y] = '../static/KTLX/201305202016/' + product + '/lg/' + x + '_' + y + '.png';
+								overlay[x][y] = new RadarOverlay(bounds[x][y], srcimg[x][y], map);
+							}
+						}
+					}
+				});
+			}
+
+			function RadarOverlay(bounds, image, map) {
+				this.bounds_ = bounds;
+				this.image_ = image;
+				this.map_ = map;
+
+				this.div_ = null;
+
+				this.setMap(map);
+			}
+
+			RadarOverlay.prototype.onAdd = function() {
+				var div = document.createElement('div');
+				div.style.borderStyle = 'none';
+				div.style.borderWidth = '0px';
+				div.style.position = 'absolute';
+
+				var img = document.createElement('img');
+				img.src = this.image_;
+				img.style.width = '100%';
+				img.style.height = '100%';
+				img.style.position = 'absolute';
+				img.style.opacity = 0.75;
+				div.appendChild(img);
+
+				this.div_ = div;
+
+				var panes = this.getPanes();
+				panes.overlayLayer.appendChild(div);
+			};
+
+			RadarOverlay.prototype.draw = function() {
+				var overlayProjection = this.getProjection();
+
+				var sw = overlayProjection.fromLatLngToDivPixel(this.bounds_.getSouthWest());
+				var ne = overlayProjection.fromLatLngToDivPixel(this.bounds_.getNorthEast());
+
+				var div = this.div_;
+				div.style.left = sw.x + 'px';
+				div.style.top = ne.y + 'px';
+				div.style.width = (ne.x - sw.x) + 'px';
+				div.style.height = (sw.y - ne.y) + 'px';
+			};
+
+			RadarOverlay.prototype.onRemove = function() {
+				this.div_.parentNode.removeChild(this.div_);
+				this.div_ = null;
+			};
+
+			var cities = {
+				type: 'FeatureCollection',
+				features: [{
+					type: 'Feature',
+					geometry: {type: 'Point', coordinates: [-87.650, 41.850]},
+					properties: {name: 'Chicago'}
+				}, {
+					type: 'Feature',
+					geometry: {type: 'Point', coordinates: [-149.900, 61.218]},
+					properties: {name: 'Anchorage'}
+				}, {
+					type: 'Feature',
+					geometry: {type: 'Point', coordinates: [-99.127, 19.427]},
+					properties: {name: 'Mexico City'}
+				}, {
+					type: 'Feature',
+					geometry: {type: 'Point', coordinates: [-0.126, 51.500]},
+					properties: {name: 'London'}
+				}, {
+					type: 'Feature',
+					geometry: {type: 'Point', coordinates: [28.045, -26.201]},
+					properties: {name: 'Johannesburg'}
+				}, {
+					type: 'Feature',
+					geometry: {type: 'Point', coordinates: [15.322, -4.325]},
+					properties: {name: 'Kinshasa'}
+				}, {
+					type: 'Feature',
+					geometry: {type: 'Point', coordinates: [151.207, -33.867]},
+					properties: {name: 'Sydney'}
+				}, {
+					type: 'Feature',
+					geometry: {type: 'Point', coordinates: [0, 0]},
+					properties: {name: '0°N 0°E'}
+				}]
+			};
+			google.maps.event.addDomListener(window, 'load', initMap);
+		</script>
+	</body>
 </html>
